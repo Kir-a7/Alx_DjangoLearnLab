@@ -1,3 +1,5 @@
+from .models import Author, Library
+
 author = Author.objects.get(name="Author Name")
 books_by_author = author.books.all()
 for book in books_by_author:
