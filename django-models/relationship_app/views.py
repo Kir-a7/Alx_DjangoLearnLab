@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Library
 from relationship_app.models import Book, Library
 from django.views.generic.detail import DetailView
@@ -23,3 +23,20 @@ class LibraryDetailView(DetailView):
         context['books'] = self.object.books.all()
         
         return context
+
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+
+# View for user registration
+def register(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # Log the user in after registration
+            return redirect('home')  # Redirect to the homepage after registration
+    else:
+        form = UserCreationForm()
+    return render(request, 'relationship_app/register.html', {'form': form})
+
