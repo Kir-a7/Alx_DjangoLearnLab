@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from .models import Library
 from relationship_app.models import Book, Library
 from django.views.generic.detail import DetailView
-from django.contrib.auth.forms import login, logout
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 
 def list_books(request):
     books = Book.objects.all()  # Get all Book objects
