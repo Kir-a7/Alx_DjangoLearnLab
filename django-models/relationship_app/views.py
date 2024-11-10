@@ -39,15 +39,6 @@ def register(request):
         form = UserCreationForm()
     return render(request, 'relationship_app/register.html', {'form': form})
 
-# Check functions to verify user role
-def is_admin(user):
-    return user.userprofile.role == 'Admin'
-
-def is_librarian(user):
-    return user.userprofile.role == 'Librarian'
-
-def is_member(user):
-    return user.userprofile.role == 'Member'
 
 # Admin view
 def is_admin(user):
