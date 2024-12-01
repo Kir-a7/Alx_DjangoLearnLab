@@ -3,6 +3,8 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView,
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from django_filters import rest_framework 
+from rest_framework import generics
 
 from .models import Book
 from .serializers import BookSerializer
