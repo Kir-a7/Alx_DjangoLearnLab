@@ -11,6 +11,11 @@ class Post(models.Model):
     published_date = models.DateTimeField(auto_now_add=True)
     tags = TaggableManager()  
 
+class Tag(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Comment(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='comments')
