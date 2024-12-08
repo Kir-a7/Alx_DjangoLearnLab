@@ -1,15 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from taggit.managers import TaggableManager
+
 
 class Post(models.Model):
-    title = models.CharField(max_length=200)
-    content= models.TextField()
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     published_date = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE,related_name='post' )
-    
-    def __str__(self):
-        return self.title
+    tags = TaggableManager()  
 
 
 class Comment(models.Model):
