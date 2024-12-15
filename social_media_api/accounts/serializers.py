@@ -1,26 +1,30 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import CustomUser
 from django.contrib.auth.models import update_last_login
 from rest_framework.authtoken.models import Token
 
+# Get the custom user model
+User = get_user_model()
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['id', 'username', 'email', 'bio', 'profile_picture', 'followers']
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['username', 'password', 'email']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(
+        # Use `get_user_model()` to create the user
+        user = get_user_model().objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password']
         )
-        Token.objects.create(user=user)
+        Token.objects.create(user=user)  # Create a token for the new user
         return user
 
 class LoginSerializer(serializers.Serializer):
