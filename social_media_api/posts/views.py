@@ -20,15 +20,27 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         return obj.author == request.user
 
 
-class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ["title", "content"]
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from .models import Post
+from .serializers import PostSerializer
+from rest_framework import status
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+class PostViewSet(ViewSet):
+    # Fetch all posts
+    def list(self, request):
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+    # Create a new post
+    def create(self, request):
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class CommentViewSet(viewsets.ModelViewSet):
