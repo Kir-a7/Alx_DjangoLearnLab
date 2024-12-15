@@ -1,5 +1,4 @@
 from django.db import models
-from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -13,6 +12,14 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+    
+class Like(models.Model):
+    post = models.ForeignKey(Post, related_name='likes', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='likes', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
