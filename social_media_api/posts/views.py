@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from notifications.models import Notification
 from django.contrib.contenttypes.models import ContentType
+from rest_framework import filters
+
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
