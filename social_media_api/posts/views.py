@@ -9,15 +9,22 @@ from rest_framework.permissions import IsAuthenticated
 from notifications.models import Notification
 from django.contrib.contenttypes.models import ContentType
 
+class IsAuthorOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        # Read-only permissions for everyone
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # Write permissions only for the author
+        return obj.author == request.user
 
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['title', 'content']
-    
+    permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ["title", "content"]
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -25,10 +32,10 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
-       serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
 
 class FeedView(APIView):
@@ -51,34 +58,45 @@ class FeedView(APIView):
         ]
         return Response(feed_data, status=status.HTTP_200_OK)
 
+
 class LikePostView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        if Like.objects.filter(post=post, user=request.user).exists():
-            return Response({"message": "You already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        like = Like.objects.create(post=post, user=request.user)
+        post = generics.get_object_or_404(Post, pk=pk)  # Fetch or return 404
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
 
-        # Create a notification for the post author
-        notification = Notification.objects.create(
+        if not created:
+            return Response(
+                {"detail": "You have already liked this post."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        Notification.objects.create(
             recipient=post.author,
             actor=request.user,
-            verb="liked",
+            verb="liked your post",
             target=post,
-            target_content_type=ContentType.objects.get_for_model(Post),
         )
-        return Response({"message": "Post liked successfully."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Post liked successfully."}, status=status.HTTP_200_OK
+        )
+
 
 class UnlikePostView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        like = Like.objects.filter(post=post, user=request.user).first()
-        if not like:
-            return Response({"message": "You haven't liked this post."}, status=status.HTTP_400_BAD_REQUEST)
-        
+        post = generics.get_object_or_404(Post, pk=pk)  # Fetch or return 404
+        like = Like.objects.filter(user=request.user, post=post)
+
+        if not like.exists():
+            return Response(
+                {"detail": "You have not liked this post."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         like.delete()
-        return Response({"message": "Post unliked successfully."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Post unliked successfully."}, status=status.HTTP_200_OK
+        )
